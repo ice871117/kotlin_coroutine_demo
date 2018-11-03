@@ -17,7 +17,12 @@ class MainActivity: AppCompatActivity() {
         val TEST_CASE = listOf(CommonUsage,
                 CompoundUsage,
                 ChannelUsage,
-                DispatcherUsage)
+                DispatcherUsage,
+                CancelUsage,
+                ThreadProducerConsumer,
+                CoroutineProducerConsumer,
+                ExceptionHandleUsage,
+                Callback2CoroutineUsage)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +48,6 @@ class MainActivity: AppCompatActivity() {
                     append("$log\n")
                 }
             }
-
         }
 
     }

@@ -1,16 +1,11 @@
 package com.tencent.kotlincoroutine
 
-import android.util.Log
-import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.concurrent.thread
 
 class ThreadProducer(private val queue: ArrayBlockingQueue<Int>, val tname: String) : Thread(tname) {
 
-    var started = false
-    private set
-
-    private val random = Random()
+    private var started = false
 
     override fun start() {
         started = true
@@ -18,33 +13,31 @@ class ThreadProducer(private val queue: ArrayBlockingQueue<Int>, val tname: Stri
     }
 
     override fun run() {
-        println("$tname started")
+        printFormatMsg("$tname started")
         var resource = 1
         while (started) {
             try {
-                sleep(random.nextInt(50).toLong())
+                sleep(10L)
                 val nextValue = resource++
-                println("$tname producing ---> $nextValue")
+                printFormatMsg("$tname -> $nextValue")
                 queue.put(nextValue)
-                if (nextValue == 100) {
+                if (nextValue == 10) {
                     // an extra 100 to let the second consumer quit
                     queue.put(nextValue)
                     started = false
                 }
-            } catch(e: InterruptedException) {
-                println("interrupted")
+            } catch (e: InterruptedException) {
+                printFormatMsg("interrupted")
             }
         }
-        println("$tname quit...")
+        printFormatMsg("$tname quit...")
     }
 
 }
 
 class ThreadConsumer(private val queue: ArrayBlockingQueue<Int>, val tname: String) : Thread(tname) {
 
-    var started = false
-    private set
-    private val random = Random()
+    private var started = false
 
     override fun start() {
         started = true
@@ -52,41 +45,39 @@ class ThreadConsumer(private val queue: ArrayBlockingQueue<Int>, val tname: Stri
     }
 
     override fun run() {
-        println("$tname start")
+        printFormatMsg("$tname start")
         while (started) {
             try {
-                sleep(random.nextInt(300).toLong())
+                sleep(50L)
                 val nextValue = queue.take()
-                println("$tname consuming ===> $nextValue")
-                if (nextValue == 100) {
+                printFormatMsg("$tname => $nextValue")
+                if (nextValue == 10) {
                     started = false
                 }
-            } catch(e: InterruptedException) {
-                println("interrupted")
+            } catch (e: InterruptedException) {
+                printFormatMsg("interrupted")
             }
         }
-        println("$tname quit...")
+        printFormatMsg("$tname quit...")
     }
 
 }
 
-object ThreadProConTestCase {
+object ThreadProducerConsumer : ITestCase {
 
-    const val TAG = "ThreadTestCase"
-    val producer: ThreadProducer
-    val consumer1: ThreadConsumer
-    val consumer2: ThreadConsumer
-    val queue: ArrayBlockingQueue<Int>
+    private lateinit var producer: ThreadProducer
+    private lateinit var consumer1: ThreadConsumer
+    private lateinit var consumer2: ThreadConsumer
+    private val queue: ArrayBlockingQueue<Int> = ArrayBlockingQueue(10)
 
-    init {
-        queue = ArrayBlockingQueue(10)
+    override fun test() {
+        queue.clear()
         producer = ThreadProducer(queue, "producer")
         consumer1 = ThreadConsumer(queue, "consumer1")
         consumer2 = ThreadConsumer(queue, "consumer2")
-    }
 
-    fun go() {
         thread {
+            printFormatMsg("======> ThreadProducerConsumer begin")
             val before = System.currentTimeMillis()
             producer.start()
             consumer1.start()
@@ -94,9 +85,8 @@ object ThreadProConTestCase {
             producer.join()
             consumer1.join()
             consumer2.join()
-            Log.w(TAG, "Total time consumed = ${System.currentTimeMillis() - before}")
+            printFormatMsg("ThreadProducerConsumer time = ${System.currentTimeMillis() - before}")
         }
     }
-
 
 }

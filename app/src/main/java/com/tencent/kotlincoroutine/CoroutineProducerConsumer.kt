@@ -1,79 +1,69 @@
 package com.tencent.kotlincoroutine
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.*
-import java.util.concurrent.ArrayBlockingQueue
 
-class CoroutineProducer(private val queue: ArrayBlockingQueue<Int>, val tname: String) {
-
-    var started = true
-        private set
-
-    private val random = Random()
+class CoroutineProducer(private val channel: SendChannel<Int>, val tname: String) {
 
     suspend fun run() {
-        println("$tname started")
+        printFormatMsg("$tname started")
         var resource = 1
-        while (started) {
+        while (true) {
             try {
-                delay(random.nextInt(50).toLong())
+                delay(10L)
                 val nextValue = resource++
-                println("$tname producing ---> $nextValue")
-                queue.put(nextValue)
-                if (nextValue == 100) {
+                printFormatMsg("$tname -> $nextValue")
+                channel.send(nextValue)
+                if (nextValue == 10) {
                     // an extra 100 to let the second consumer quit
-                    queue.put(nextValue)
-                    started = false
+                    channel.close()
+                    break
                 }
             } catch(e: InterruptedException) {
-                println("interrupted")
+                printFormatMsg("interrupted")
             }
         }
-        println("$tname quit...")
+        printFormatMsg("$tname quit...")
     }
 
 }
 
-class CoroutineConsumer(private val queue: ArrayBlockingQueue<Int>, val tname: String) {
-
-    var started = true
-        private set
-    private val random = Random()
+class CoroutineConsumer(private val channel: ReceiveChannel<Int>, val tname: String) {
 
     suspend fun run() {
-        println("$tname start")
-        while (started) {
-            try {
-                delay(random.nextInt(300).toLong())
-                val nextValue = queue.take()
-                println("$tname consuming ===> $nextValue")
-                if (nextValue == 100) {
-                    started = false
-                }
-            } catch(e: InterruptedException) {
-                println("interrupted")
+        printFormatMsg("$tname start")
+        try {
+            for (item in channel) {
+                delay(50L)
+                printFormatMsg("$tname => $item")
             }
+        } catch (e: InterruptedException) {
+            printFormatMsg("interrupted")
         }
-        println("$tname quit...")
+        printFormatMsg("$tname quit...")
     }
 
 }
 
-object CoroutineProConTestCase {
+object CoroutineProducerConsumer: ITestCase {
 
-    const val TAG = "CoroutineProConTestCase"
+    private lateinit var channel: Channel<Int>
+    private lateinit var producer: CoroutineProducer
+    private lateinit var consumer1: CoroutineConsumer
+    private lateinit var consumer2: CoroutineConsumer
 
-    val queue = ArrayBlockingQueue<Int>(10)
-    val producer = CoroutineProducer(queue, "producer")
-    val consumer1 = CoroutineConsumer(queue, "consumer1")
-    val consumer2 = CoroutineConsumer(queue, "consumer2")
-
-    fun go() {
+    override fun test() {
+        channel = Channel<Int>(10)
+        producer = CoroutineProducer(channel, "producer")
+        consumer1 = CoroutineConsumer(channel, "consumer1")
+        consumer2 = CoroutineConsumer(channel, "consumer2")
         GlobalScope.launch(Dispatchers.Default) {
+            printFormatMsg("======> CoroutineProducerConsumer begin")
             val before = System.currentTimeMillis()
             val job1 = GlobalScope.launch(Dispatchers.Default) { producer.run() }
             val job2 = GlobalScope.launch(Dispatchers.Default) { consumer1.run() }
@@ -81,9 +71,7 @@ object CoroutineProConTestCase {
             job1.join()
             job2.join()
             job3.join()
-            Log.w(TAG, "Total time consumed = ${System.currentTimeMillis() - before}")
+            printFormatMsg("CoroutineProducerConsumer time = ${System.currentTimeMillis() - before}")
         }
     }
-
-
 }
