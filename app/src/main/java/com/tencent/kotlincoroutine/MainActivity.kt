@@ -22,7 +22,8 @@ class MainActivity: AppCompatActivity() {
                 ThreadProducerConsumer,
                 CoroutineProducerConsumer,
                 ExceptionHandleUsage,
-                Callback2CoroutineUsage)
+                Callback2CoroutineUsage,
+                SuspendOrBlocking)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
