@@ -1,7 +1,9 @@
 package com.tencent.kotlincoroutine
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 
 object CommonUsage: ITestCase {
 
@@ -22,9 +24,9 @@ object CommonUsage: ITestCase {
     }
 
     override fun test() {
-        GlobalScope.launch(IO) {
+        GlobalScope.launch(Main) {
             printFormatMsg("enter test")
-            runBlocking {
+            withContext(IO) {
                 printFormatMsg("result in runBlocking is ${CommonUsage.suspendFun1(1)}")
             }
             printFormatMsg("done test")

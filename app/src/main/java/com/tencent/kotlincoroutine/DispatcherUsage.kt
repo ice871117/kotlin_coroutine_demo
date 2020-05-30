@@ -2,6 +2,7 @@ package com.tencent.kotlincoroutine
 
 import android.os.Handler
 import android.os.HandlerThread
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -18,7 +19,7 @@ object DispatcherUsage: ITestCase {
         val handlerThread = HandlerThread("DispatcherUsage-thread")
         handlerThread.start()
         val myDispatcher = Handler(handlerThread.looper).asCoroutineDispatcher("My-Dispatcher")
-        runBlocking(myDispatcher) {
+        GlobalScope.launch(myDispatcher) {
 
             launch {
                 doSomeWork()
