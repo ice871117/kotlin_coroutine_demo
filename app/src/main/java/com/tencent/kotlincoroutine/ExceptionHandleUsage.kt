@@ -2,17 +2,21 @@ package com.tencent.kotlincoroutine
 
 import kotlinx.coroutines.*
 import java.lang.RuntimeException
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 object ExceptionHandleUsage: ITestCase {
 
+    /**
+     * launch will throw an exception as soon as possible
+     */
     private suspend fun exceptionWithinLaunch() = GlobalScope.launch {
         throw RuntimeException("Exception in launch")
     }
 
-    private fun exceptionWithinAsync() = GlobalScope.async {
-        throw RuntimeException("Exception in async")
-    }
-
+    /**
+     * however async will not throw the exception until its returned deferred's await() is called.
+     */
     private fun scopedExceptionHandle(): Deferred<*> {
         val scope = CoroutineScope(Job())
         return scope.async {
@@ -21,7 +25,7 @@ object ExceptionHandleUsage: ITestCase {
                 printFormatMsg("launch child coroutine")
                 async {
                     printFormatMsg("launch grand child coroutine")
-                    throw RuntimeException("Exception in grand child")
+                    throw RuntimeException("An exception in grand child")
                 }
             }
         }
@@ -31,17 +35,33 @@ object ExceptionHandleUsage: ITestCase {
         try {
             blocking.invoke()
         } catch (t: Throwable) {
-            printFormatMsg("Exception encountered ${t.message}")
+            printFormatMsg("Exception encountered: ${t.message}")
         }
     }
 
     override fun test() {
         runBlocking {
-//            execAndCatch { exceptionWithinLaunch() }  // can not catch it here, exception is just thrown where it happen
-            val deferred = exceptionWithinAsync()
+//            execAndCatch { exceptionWithinLaunch() }  // if can not catch it here, exception will be just thrown where it happen
+            val deferred = scopedExceptionHandle()
             execAndCatch { deferred.await() }
-            val deferred2 = scopedExceptionHandle()
-            execAndCatch { deferred2.await() }
+        }
+
+        // use SupervisorJob
+        CoroutineScope(SupervisorJob() + MyExceptionPreHandler()).launch {
+            launch {
+                throw RuntimeException("An exception in child1")
+                printFormatMsg("child 1 finish")
+            }
+            launch {
+                printFormatMsg("child 2 finish")// Child 2
+            }
+        }
+    }
+
+    class MyExceptionPreHandler :
+            AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+        override fun handleException(context: CoroutineContext, exception: Throwable) {
+            printFormatMsg("Handling exception within $context, detail: $exception")
         }
     }
 
