@@ -23,7 +23,8 @@ class MainActivity: AppCompatActivity() {
                 CoroutineProducerConsumer,
                 ExceptionHandleUsage,
                 Callback2CoroutineUsage,
-                SuspendOrBlocking)
+                SuspendOrBlocking,
+                SuspendCoroutineUsage)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +72,7 @@ class MainActivity: AppCompatActivity() {
 
         private fun buildText(name: String): TextView {
             val text = TextView(this@MainActivity)
-            text.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 100)
+            text.layoutParams = AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 100)
             text.text = name
             text.setPadding(20, 0, 0, 0)
             text.gravity = Gravity.LEFT or Gravity.CENTER_VERTICAL
