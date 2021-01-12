@@ -13,7 +13,7 @@ object ChannelUsage: ITestCase {
     private fun getChannel(): ReceiveChannel<Int> = GlobalScope.produce {
         for (i in 1..5) {
             send(i)
-            delay(200L)
+            delay(1000L)
         }
         close()
     }
@@ -21,7 +21,7 @@ object ChannelUsage: ITestCase {
     override fun test() {
         runBlocking {
             val channel = getChannel()
-            val job = GlobalScope.launch {
+            GlobalScope.launch {
                 try {
                     repeat(6) {
                         printFormatMsg("receiving ${channel.receive()}")
@@ -30,7 +30,6 @@ object ChannelUsage: ITestCase {
                     printFormatMsg("exception ${e.localizedMessage}")
                 }
             }
-            job.join()
         }
     }
 

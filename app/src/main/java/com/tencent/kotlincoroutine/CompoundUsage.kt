@@ -14,7 +14,8 @@ object CompoundUsage: ITestCase {
             }
         }
 
-        val job2 = GlobalScope.async {
+        val job2 = GlobalScope.async(DISPATCHER_API) {
+            printFormatMsg("job2 start")
             job1.start()
             "Producer start"
         }
